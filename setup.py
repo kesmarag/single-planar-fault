@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='kesmarag-single-planar-fault',
-      version='0.1.0',
+      version='0.1.1',
       author='Costas Smaragdakis',
       author_email='kesmarag@gmail.com',
       url='https://github.com/kesmarag/single-planar-fault',

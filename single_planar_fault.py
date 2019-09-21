@@ -148,14 +148,14 @@ class SinglePlanarFault(object):
     for i in range(self._nstk):
       for j in range(self._ndip):
         self._slip_mat[i,j] = self._estimate_slip((i,j), dmax, mu, sigma)
-        self._t_acc_mat[i,j] = self._estimate_q((i,j), t_acc, mu, sigma)
-        self._t_eff_mat[i,j] = self._estimate_q((i,j), t_eff, mu, sigma)
-        self._rake_mat[i,j] = self._estimate_q((i,j), rake, mu, sigma)
+        self._t_acc_mat[i,j] = self._estimate_q((i,j), dmax, t_acc, mu, sigma)
+        self._t_eff_mat[i,j] = self._estimate_q((i,j), dmax, t_eff, mu, sigma)
+        self._rake_mat[i,j] = self._estimate_q((i,j), dmax, rake, mu, sigma)
     for i in range(self._nstk):
       for j in range(self._ndip):
         self._slip_vel_mat[i,j,:] = self._slip_velocity((i,j))
 
-  def _estimate_q(self, idx, q, mu, sigma):
+  def _estimate_q(self, idx, q0, q1, mu, sigma):
     k = len(mu)
     sum1 = 0.0
     sum2 = 0.0
@@ -163,8 +163,8 @@ class SinglePlanarFault(object):
     for i in range(k):
       _mu_x, _mu_y, _mu_z = self._idx_to_xyz_km(mu[i])
       d = self._dist_km(_mu_x, _mu_y, _mu_z, x, y, z)
-      sum1 += q[i] * self._gaussian_max_one(d, sigma[i])
-      sum2 += self._gaussian_max_one(d, sigma[i])
+      sum1 += q0[i] * q1[i] * self._gaussian_max_one(d, sigma[i])
+      sum2 += q0[i] * self._gaussian_max_one(d, sigma[i])
     return sum1/sum2
 
   def _estimate_slip(self, idx, q, mu, sigma):
