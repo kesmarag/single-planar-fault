@@ -37,6 +37,7 @@ class SinglePlanarFault(object):
     self._shyp = hyp[0]
     self._dhyp = hyp[1]
     self._dt = dt
+    self._numt = int(2./dt)
     self._vr = vr
     lth = self._lth * 1e3
     wid = self._wid * 1e3
@@ -144,7 +145,7 @@ class SinglePlanarFault(object):
     self._t_acc_mat = np.zeros((self._nstk, self._ndip))
     self._t_eff_mat = np.zeros((self._nstk, self._ndip))
     self._rake_mat = np.zeros((self._nstk, self._ndip))
-    self._slip_vel_mat = np.zeros((self._nstk, self._ndip, 200))
+    self._slip_vel_mat = np.zeros((self._nstk, self._ndip, self._numt))
     for i in range(self._nstk):
       for j in range(self._ndip):
         self._slip_mat[i,j] = self._estimate_slip((i,j), dmax, mu, sigma)
@@ -197,10 +198,11 @@ class SinglePlanarFault(object):
     ts = np.zeros_like((self._slip_mat)) - 1
     inst = []
     times = []
+    vmax = np.max(self._slip_vel_mat)
     for epoch in range(num_steps):
       c = self._tinit < t
       ts[c] += 1
-      ts = np.minimum(ts, 199 * np.ones_like((self._slip_mat)))
+      ts = np.minimum(ts, (self._numt - 1) * np.ones_like((self._slip_mat)))
       times.append(t)
       t += self._dt
       tmp = np.zeros_like(ts)
@@ -216,8 +218,8 @@ class SinglePlanarFault(object):
     plt.ylabel('distance along dip [km]')
     ims = []
     for i in range(num_steps):
-      ims.append((plt.pcolor(x,y,np.transpose(inst[i]), vmin=0.0, vmax=10.0),))
-    im_ani = animation.ArtistAnimation(fig, ims, interval=10, repeat_delay=300, blit=True)
+      ims.append((plt.pcolor(x,y,np.transpose(inst[i]), vmin=0.0, vmax=vmax),))
+    im_ani = animation.ArtistAnimation(fig, ims, interval=int(1000*self._dt), repeat_delay=100, blit=True)
     im_ani.save(filename)
     # plt.show()
 
