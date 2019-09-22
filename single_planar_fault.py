@@ -226,7 +226,8 @@ class SinglePlanarFault(object):
     t1 = 2.0
     t = np.arange(0, t1, self._dt)
     slip_vel = np.zeros((t.shape[0],))
-    for i in range(t.shape[0]):
+    slip_vel[0] = 0.0
+    for i in range(1, t.shape[0]):
       slip_vel[i] = self._slip_velocity_t(t[i],
                                           self._slip_mat[idx[0], idx[1]],
                                           self._t_acc_mat[idx[0], idx[1]],
