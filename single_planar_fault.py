@@ -18,6 +18,7 @@ class SinglePlanarFault(object):
                dt,
                mu,
                sigma,
+               rmax,
                dmax,
                rake,
                t_acc,
@@ -98,7 +99,7 @@ class SinglePlanarFault(object):
     self._dhyp0 = (2 * hyp[1] + 1) * self._wid / (2. * self._ndip)
     # print(self._tinit)
     # print('y ->',  y - hy)
-    self._model_to_fault(mu, sigma, dmax, rake, t_acc, t_eff)
+    self._model_to_fault(mu, sigma, rmax, dmax, rake, t_acc, t_eff)
     self._rake = []
     self._slip1 = []
     self._slip2 = []
@@ -144,7 +145,7 @@ class SinglePlanarFault(object):
   #   self._model_rho = np.array(rho)
   #   print(self._model_d)
 
-  def _model_to_fault(self, mu, sigma, dmax, rake, t_acc, t_eff):
+  def _model_to_fault(self, mu, sigma, rmax, dmax, rake, t_acc, t_eff):
     n = self._nstk * self._ndip
     self._slip_mat = np.zeros((self._nstk, self._ndip))
     self._t_acc_mat = np.zeros((self._nstk, self._ndip))
@@ -153,15 +154,15 @@ class SinglePlanarFault(object):
     self._slip_vel_mat = np.zeros((self._nstk, self._ndip, self._numt))
     for i in range(self._nstk):
       for j in range(self._ndip):
-        self._slip_mat[i,j] = self._estimate_slip((i,j), dmax, mu, sigma)
-        self._t_acc_mat[i,j] = self._estimate_q((i,j), dmax, t_acc, mu, sigma)
-        self._t_eff_mat[i,j] = self._estimate_q((i,j), dmax, t_eff, mu, sigma)
-        self._rake_mat[i,j] = self._estimate_q((i,j), dmax, rake, mu, sigma)
+        self._slip_mat[i,j] = self._estimate_slip((i,j),rmax, dmax, mu, sigma)
+        self._t_acc_mat[i,j] = self._estimate_q((i,j), rmax, dmax, t_acc, mu, sigma)
+        self._t_eff_mat[i,j] = self._estimate_q((i,j), rmax, dmax, t_eff, mu, sigma)
+        self._rake_mat[i,j] = self._estimate_q((i,j), rmax, dmax, rake, mu, sigma)
     for i in range(self._nstk):
       for j in range(self._ndip):
         self._slip_vel_mat[i,j,:] = self._slip_velocity((i,j))
 
-  def _estimate_q(self, idx, q0, q1, mu, sigma):
+  def _estimate_q(self, idx, q0, m, q1, mu, sigma):
     k = len(mu)
     sum1 = 0.0
     sum2 = 0.0
@@ -169,11 +170,11 @@ class SinglePlanarFault(object):
     for i in range(k):
       _mu_x, _mu_y, _mu_z = self._idx_to_xyz_km(mu[i])
       d = self._dist_km(_mu_x, _mu_y, _mu_z, x, y, z)
-      sum1 += q0[i] * q1[i] * self._gaussian_max_one(d, sigma[i])
-      sum2 += q0[i] * self._gaussian_max_one(d, sigma[i])
+      sum1 += m * q0[i] * q1[i] * self._gaussian_max_one(d, sigma[i])
+      sum2 += m * q0[i] * self._gaussian_max_one(d, sigma[i])
     return sum1/sum2
 
-  def _estimate_slip(self, idx, q, mu, sigma):
+  def _estimate_slip(self, idx, q, m, mu, sigma):
     k = len(mu)
     sum1 = 0.0
     sum2 = 0.0
@@ -181,7 +182,7 @@ class SinglePlanarFault(object):
     for i in range(k):
       _mu_x, _mu_y, _mu_z = self._idx_to_xyz_km(mu[i])
       d = self._dist_km(_mu_x, _mu_y, _mu_z, x, y, z)
-      sum1 += q[i] * self._gaussian_max_one(d, sigma[i])
+      sum1 += m * q[i] * self._gaussian_max_one(d, sigma[i])
     return sum1
 
 
@@ -367,9 +368,10 @@ if __name__ == '__main__':
   vel_model = 'wgmf.bm'
   dt = 0.1
   mu = [(1, 1)]
-  sigma = [10]
+  sigma = [2]
   # hyp_idx = (0, 1)
-  dmax = [4.0]
+  rmax = [1.0]
+  dmax = 400.0
   rake = [50.0]
   t_acc = [0.2]
   t_eff = [1.2]
@@ -384,6 +386,7 @@ if __name__ == '__main__':
                             dt,
                             mu,
                             sigma,
+                            rmax,
                             dmax,
                             rake,
                             t_acc,
