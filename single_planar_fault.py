@@ -55,7 +55,7 @@ class SinglePlanarFault(object):
     x,y =  p(self._elon, self._elat)
     txl = []
     tyl = []
-    tx, ty = x - lth/2.0* np.cos(stk),y + lth/2.0 * np.cos(np.pi/2. - stk)
+    tx, ty = x - lth/2.0 * np.cos(stk), y + lth/2.0 * np.cos(np.pi/2. - stk)
     for i in range(self._nstk * 2):
       tx = tx + 0.5 * dl * np.cos(stk)
       ty = ty - 0.5 * dl * np.cos(np.pi/2. - stk)
@@ -90,9 +90,14 @@ class SinglePlanarFault(object):
     hx, hy = p(self._hlon, self._hlat)
     for i in range(self._nstk):
       for j in range(self._ndip):
-        self._tinit[i,j] = np.sqrt((txl[i] + pxl[j] - x-hx)**2 +
-                                   (tyl[i] + pyl[j] - y - hy)**2)/(self._vr * 1e3)
+        self._tinit[i,j] = np.sqrt((txl[i] + pxl[j] - x - hx)**2 +
+                                   (tyl[i] + pyl[j] - y - hy)**2 +
+                                   1.0*(self._hdep - self._c[i,j,2])**2)/(self._vr * 1e3)
 
+    self._shyp0 = - self._lth / 2  + (2 * hyp[0] + 1) * self._lth / (2 * self._nstk)
+    self._dhyp0 = (2 * hyp[1] + 1) * self._wid / (2. * self._ndip)
+    # print(self._tinit)
+    # print('y ->',  y - hy)
     self._model_to_fault(mu, sigma, dmax, rake, t_acc, t_eff)
     self._rake = []
     self._slip1 = []
@@ -190,7 +195,7 @@ class SinglePlanarFault(object):
     return x/1000, y/1000, z/1000
 
   def _dist_km(self, x1, y1, z1, x2, y2, z2):
-    return np.sqrt((x1-x2)**2 + (y1-y2)**2 + (z1-z2)**2)
+    return np.sqrt((x1 - x2)**2 + (y1 - y2)**2 + (z1 - z2)**2)
 
   def animation_slip_velocity(self, filename, num_steps=1000):
     # num_steps = 600
@@ -293,7 +298,7 @@ class SinglePlanarFault(object):
             %(self._elon, self._elat, self._nstk, self._ndip,
               self._lth, self._wid))
     f.write('  %d %d %.2f %.2f %.2f\n'\
-            %(self._stk, self._dip, self._dth, self._shyp, self._dhyp))
+            %(self._stk, self._dip, self._dth, self._shyp0, self._dhyp0))
     # Points
     f.write('POINTS %d\n' %(self._ndip * self._nstk))
     for i in range(self._nstk):
@@ -352,22 +357,22 @@ class SinglePlanarFault(object):
   #   plt.show()
 
 if __name__ == '__main__':
-  angles = (30, 40)
-  ngrid = (40, 30)
-  dims = (16.0, 12.0)
+  angles = (30, 45)
+  ngrid = (3, 3)
+  dims = (10.0, 10.0)
   top_center = (38.0, 20.0, 3.0)
   # hyp = (-5.0, 5.0)
-  hyp_idx = (10, 10)
+  hyp_idx = (2, 2)
   vr = 2.6
   vel_model = 'wgmf.bm'
-  dt = 0.01
-  mu = [(8, 5), (13, 14), (28, 22), (20, 20), (16, 7), (17, 4)]
-  sigma = [0.9, 1.5, 1.0, 0.4, 1.3, 1.2]
+  dt = 0.1
+  mu = [(1, 1)]
+  sigma = [10]
   # hyp_idx = (0, 1)
-  dmax = [4.0, 7.0, 10.0, 3.0, 8.0, 2.0]
-  rake = [50.0, 40.0, 50.0, 40.0, 40.0, 40.0]
-  t_acc = [0.2, 0.1, 0.3, 0.1, 0.2, 0.1]
-  t_eff = [1.2, 1.5, 1.2, 1.4, 1.1, 1.4]
+  dmax = [4.0]
+  rake = [50.0]
+  t_acc = [0.2]
+  t_eff = [1.2]
 
 
   fault = SinglePlanarFault(top_center,
@@ -383,7 +388,7 @@ if __name__ == '__main__':
                             rake,
                             t_acc,
                             t_eff)
-  fault.create_srf()
+  fault.create_srf('./test.srf')
   # fault.plot()
   # idx_test = (1,1)
   # mu_test = [(0,1), (1,1)]
